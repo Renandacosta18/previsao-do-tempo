@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Previsão do Tempo - Santo Antônio do Descoberto</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(120deg, #2980b9, #6dd5fa);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: white;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 2rem;
+            border-radius: 20px;
+            margin: 2rem;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            max-width: 600px;
+            width: 90%;
+        }
+
+        .weather-icon {
+            width: 150px;
+            height: 150px;
+            margin: 1rem 0;
+        }
+
+        .weather-icon.sun {
+            animation: rotate 20s linear infinite;
+        }
+
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .temperature {
+            font-size: 4rem;
+            font-weight: bold;
+            margin: 1rem 0;
+        }
+
+        .details {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin: 2rem 0;
+        }
+
+        .detail-item {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 1rem;
+            border-radius: 10px;
+        }
+
+        #location-input {
+            padding: 0.5rem;
+            border: none;
+            border-radius: 5px;
+            margin: 1rem;
+            width: 80%;
+            max-width: 300px;
+        }
+
+        #search-btn {
+            padding: 0.5rem 1rem;
+            background: #2ecc71;
+            border: none;
+            border-radius: 5px;
+            color: white;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        #search-btn:hover {
+            background: #27ae60;
+        }
+
+        .error-message {
+            color: red;
+            margin: 1rem 0;
+        }
+
+        .loading-message {
+            color: yellow;
+            margin: 1rem 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Previsão do Tempo - Santo Antônio do Descoberto</h1>
+        <div id="current-time"></div>
+        
+        <input type="text" id="location-input" placeholder="Digite sua cidade">
+        <button id="search-btn">Buscar</button>
+        <button id="santo-antonio-btn">Santo Antônio do Descoberto</button>
+        
+        <div id="loading" class="loading-message" style="display: none;">Carregando...</div>
+        <div class="error-message" id="error-message" style="display: none;"></div>
+
+        <svg class="weather-icon sun" viewBox="0 0 100 100">
+            <circle cx="50" cy="50" r="20" fill="#FFD700"/>
+            <g id="rays">
+                <line x1="50" y1="20" x2="50" y2="10" stroke="#FFD700" stroke-width="4"/>
+                <line x1="50" y1="80" x2="50" y2="90" stroke="#FFD700" stroke-width="4"/>
+                <line x1="20" y1="50" x2="10" y2="50" stroke="#FFD700" stroke-width="4"/>
+                <line x1="80" y1="50" x2="90" y2="50" stroke="#FFD700" stroke-width="4"/>
+                <line x1="30" y1="30" x2="20" y2="20" stroke="#FFD700" stroke-width="4"/>
+                <line x1="70" y1="70" x2="80" y2="80" stroke="#FFD700" stroke-width="4"/>
+                <line x1="30" y1="70" x2="20" y2="80" stroke="#FFD700" stroke-width="4"/>
+                <line x1="70" y1="30" x2="80" y2="20" stroke="#FFD700" stroke-width="4"/>
+            </g>
+        </svg>
+
+        <div class="temperature">23°C</div>
+        
+        <div class="details">
+            <div class="detail-item">
+                <h3>Umidade</h3>
+                <p id="humidity">65%</p>
+            </div>
+            <div class="detail-item">
+                <h3>Vento</h3>
+                <p id="wind">12 km/h</p>
+            </div>
+            <div class="detail-item">
+                <h3>Sensação</h3>
+                <p id="feels-like">25°C</p>
+            </div>
+            <div class="detail-item">
+                <h3>Pressão</h3>
+                <p id="pressure">1015 hPa</p>
+            </div>
+        </div>
+    </div>
+
+<script>
+function updateTime() {
+    const timeElement = document.getElementById('current-time');
+    const now = new Date();
+    const options = { 
+        weekday: 'long', 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        timeZoneName: 'short'
+    };
+    timeElement.textContent = now.toLocaleDateString('pt-BR', options);
+}
+
+setInterval(updateTime, 1000);
+updateTime();
+
+async function fetchWeather(city) {
+    const loadingMessage = document.getElementById('loading');
+    const errorMessage = document.getElementById('error-message');
+
+    loadingMessage.style.display = 'block';
+    errorMessage.style.display = 'none';
+
+    try {
+        const apiKey = 'YOUR_API_KEY'; // Substitua com sua chave API real
+        const response = await fetch(`https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${apiKey}&units=metric&lang=pt_br`);
+        
+        if (!response.ok) {
+            throw new Error('Cidade não encontrada');
+        }
+
+        const data = await response.json();
+        
+        document.querySelector('.temperature').textContent = `${Math.round(data.main.temp)}°C`;
+        document.getElementById('humidity').textContent = `${data.main.humidity}%`;
+        document.getElementById('wind').textContent = `${data.wind.speed} km/h`;
+        document.getElementById('feels-like').textContent = `${Math.round(data.main.feels_like)}°C`;
+        document.getElementById('pressure').textContent = `${data.main.pressure} hPa`;
+
+    } catch (error) {
+        errorMessage.textContent = 'Erro ao buscar dados do clima: ' + error.message;
+        errorMessage.style.display = 'block';
+    } finally {
+        loadingMessage.style.display = 'none';
+    }
+}
+
+document.getElementById('search-btn').addEventListener('click', () => {
+    const city = document.getElementById('location-input').value;
+    fetchWeather(city);
+});
+
+// Botão específico para Santo Antônio do Descoberto
+document.getElementById('santo-antonio-btn').addEventListener('click', () => {
+    fetchWeather('Santo Antônio do Descoberto');
+});
+
+// Detecta localização do usuário ao carregar a página
+window.addEventListener('load', () => {
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(position => {
+            const lat = position.coords.latitude;
+            const lon = position.coords.longitude;
+            console.log(`Latitude: ${lat}, Longitude: ${lon}`);
+        });
+    }
+});
+</script>
+</body>
+</html>
